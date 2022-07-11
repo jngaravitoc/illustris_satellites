@@ -1,0 +1,2 @@
+# ID host halo, mass ratio sat1, mass ratio sat 2, mass ratio sat 3, looback t sat1, lookback t sat 2, lookback sat 3
+18668 0.5390 0.5390 0.5390 2.6980 7.5790 9.7690
