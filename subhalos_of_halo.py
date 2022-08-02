@@ -109,51 +109,59 @@ def numMergersIDs(tree, minMassRatio=1e-10, massPartType='stars', index=0):
     return numMergers, id_subhalos, snapnum_subhalos, id_subhalos_fpmax,  snapnum_fp_max, ratios
 
 
-basePath = '/mnt/home/nico/ceph/illutris/Illustris-3/output'
-
-#get_redshifts(basePath)
-
-
-# 135 -> snapshot at z=0
-
-Grouphalos = il.groupcat.loadHalos(basePath,135,fields=['GroupFirstSub'])
-GroupFirstSub_Mass = il.groupcat.loadHalos(basePath,135,fields=['Group_M_Crit200'])
-Group_mass =GroupFirstSub_Mass * 1E10/0.704
+#basePath = '/mnt/home/nico/ceph/illutris/Illustris-3/output'
+#basePath = '/mnt/home/nico/ceph/illutris/Illustris-1/output'
+basePath = '/mnt/home/nico/ceph/illutris/TNG100-1/output'
 
 
-Groupsubhalos = il.groupcat.loadSubhalos(basePath,135,fields=['SubhaloMass'])
+# z=0 snap nmumber:
+# 135 -> Illustris 
+# 99 -> TNG
 
+snap = 99
+
+Grouphalos = il.groupcat.loadHalos(basePath, snap, fields=['GroupFirstSub'])
+#GroupFirstSub_Mass = il.groupcat.loadHalos(basePath,snap, fields=['Group_M_Crit200'])
+
+GroupFirstSub_Mass = il.groupcat.loadHalos(basePath, snap, fields=['Group_M_TopHat200'])
+Group_mass = GroupFirstSub_Mass * 1E10/0.704
+
+
+Groupsubhalos = il.groupcat.loadSubhalos(basePath, snap, fields=['SubhaloMass'])
 
 # Select MW-like halos
 mw_cuts = np.where((Group_mass < 2E12) & (Group_mass > 0.5E12))
-
+print(mw_cuts[0])
 print("N MW-like halos", len(mw_cuts[0]))
 
 Nmw_analogues = len(mw_cuts[0])
 
 
-"""
-ratio = 1/10.
+
+ratio = 1/20.
 fields = ['SubhaloMass','SubfindID','SnapNum','SubhaloID','NextProgenitorID','MainLeafProgenitorID','FirstProgenitorID','SubhaloMassType','SubhaloPos']
 
 all_halos = np.zeros((Nmw_analogues, 19))
 k=0
-for i in range(Nmw_analogues):
-    tree = il.sublink.loadTree(basePath, 135, Grouphalos[mw_cuts][i], fields=fields)
-    numMergers = il.sublink.numMergers(tree, minMassRatio=ratio)
-    #ree2 = il.sublink.loadTree(basePath, 135, Grouphalos[mw_cuts][i], fields=fields, onlyMPB=True)
-    print("N mergers:", numMergers, "Halo ",  i)
-    if numMergers==3:
-        x = numMergersIDs(tree, minMassRatio=ratio)
-        if x[0]==3:
-            k+=1
-            all_halos[k] = np.array([Grouphalos[mw_cuts][i], x[0], x[1][0], x[1][1], x[1][2], x[2][0],
-              x[2][1], x[2][2], x[3][0], x[3][1], x[3][2], x[4][0], x[4][1],
-              x[4][2], x[5][0], x[5][1], x[5][2], tree["SubfindID"][0], tree["SnapNum"][0]])
 
-np.savetxt("halos_three_mergers.txt", all_halos, fmt=["%d", "%d", "%d",
-      "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%.3f",
-      "%.3f", "%.3f", "%d", "%d"], header="Group halo MW analogue, N mergers, id sub1, id sub2, idsub3, snap sub1, snap sub2, snap sub3, id fp1 max, id fp2 max, id fp3 max, merger rat 1, merger rat2, merger rat3, subfindID, SnapNum0")        
+Nmergers = np.zeros(Nmw_analogues)
 
 
- """
+for i in range(100, Nmw_analogues):
+    print(i, Grouphalos[i])
+    tree = il.sublink.loadTree(basePath, snap, Grouphalos[i], fields=fields)
+    #numMergers = il.sublink.numMergers(tree, minMassRatio=ratio)
+    x = numMergersIDs(tree, minMassRatio=ratio)
+    Nmergers[i] = x[0]
+    if x[0]==3:
+       all_halos[k] = np.array([Grouphalos[mw_cuts][i], x[0], x[1][0], x[1][1], x[1][2], x[2][0],
+            x[2][1], x[2][2], x[3][0], x[3][1], x[3][2], x[4][0], x[4][1],
+            x[4][2], x[5][0], x[5][1], x[5][2], tree["SubfindID"][0], tree["SnapNum"][0]])
+
+       k+=1
+np.savetxt("halos_three_mergers_1to20_Il-1.txt", all_halos[:k], fmt=["%d", "%d", "%d",
+            "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%d", "%.3f",
+           "%.3f", "%.3f", "%d", "%d"], header="Group halo MW analogue, N mergers, id sub1, id sub2, idsub3, snap sub1, snap sub2, snap sub3, id fp1 max, id fp2 max, id fp3 max, merger rat 1, merger rat2, merger rat3, subfindID, SnapNum0")        
+
+
+np.savetxt("TNG-100_nmergers_mw_analogues_tophat.txt", Nmergers, fmt="%d", header="N mergers")
